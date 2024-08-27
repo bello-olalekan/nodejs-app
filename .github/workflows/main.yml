@@ -10,11 +10,18 @@ jobs:
     steps:
       - name: Checkout Source
         uses: actions/checkout@v3
-      - name: Set Node.js 16.x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16.x
-      - name: Install Dependencies
-        run : npm install
-      - name: Test Project
-        run: npm test
+      - name: Build Docker Image
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build Docker Image
+        run: docker build -t lekandev1/nodeapp .
+      - name: Publish Image to docker hub
+        run: docker push lekandev1/nodeapp:latest
+
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Pull image from docker hub
+        run: docker pull lekandev1/nodeapp:latest
+      - name: Run Docker Container
+        run: docker run -d -p 4000:4000 -name nodejs-app-container -e MONGO_PASSWORD='${{ secrets.MONGO_PASSWORD }}' lekandev1/nodeapp
